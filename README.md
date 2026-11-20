@@ -56,6 +56,19 @@ GitHub Actions baut das Image jeden Tag um 06:00 UTC neu, dazu bei jedem Push un
 
 Discover erkennt ein Update am Label `org.opencontainers.image.version`, und dieses Label erbt das Image vom Fedora-Basisimage. Eine reine Rezeptänderung zeigt Discover deshalb erst mit dem nächsten Fedora-Basisupdate an. Sofort holt sie `rpm-ostree upgrade`.
 
+Nach jedem Build teilt chunkah das Image nach Paketen in Layer auf, höchstens 128. Eingeschaltet ist das mit `chunkah: true` im Workflow. Große Pakete bekommen einen eigenen Layer, kleine teilen sich einen. Ein Update lädt dadurch die Layer geänderter Pakete und die RPM-Datenbank, alle anderen Layer bleiben auf dem Rechner. Das fertige Image enthält keinen OSTree-Commit mehr, rpm-ostree importiert es trotzdem. Das Versionslabel bleibt erhalten.
+
+Die folgende Tabelle zeigt die Downloadgrößen mit und ohne chunkah, ermittelt am 2026-11-20:
+
+| Fall | ohne chunkah | mit chunkah |
+|---|---|---|
+| Neubau ohne Paketänderung, gemessen | 264 MB | 92 MB |
+| F45-Updates vom 2026-11-13 bis 2026-11-20, hochgerechnet | 2,1 GB | 1,3 GB |
+| Ganzes Image beim Umstieg | 3,58 GB | 3,26 GB |
+
+> [!NOTE]
+> Wenn sich die Aufteilung ändert, lädt das nächste Update mehr. Beim Abschalten von chunkah oder bei einer anderen Layer-Zahl ist es das ganze Image. BlueBuild verwendet chunkah ohne feste Version, deshalb kann auch eine geänderte chunkah-Version ein einzelnes Update vergrößern.
+
 Dependabot schlägt Updates der GitHub Action als Pull Request vor. Diese Pull Requests mergen, denn GitHub schaltet geplante Builds nach 60 Tagen ohne Aktivität im Repo ab.
 
 ## Wenn ein Build scheitert
@@ -97,3 +110,4 @@ Dabei die Versionsnummer im Befehl an die laufende Fedora-Version anpassen.
 ## Änderungen
 
 - 2026-11-20: Repo angelegt. Basis Fedora Kinoite 45, Inhalt wie im Abschnitt „Inhalt des Images“.
+- 2026-11-20: Rechunking mit chunkah eingeschaltet, Messwerte im Abschnitt „Updates“. Vorher auf dem Branch `chunkah-test` geprüft: gleicher Inhalt, Import mit `ostree container image pull` erfolgreich.
