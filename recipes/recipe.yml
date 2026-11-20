@@ -1,0 +1,58 @@
+---
+# yaml-language-server: $schema=https://schema.blue-build.org/recipe-v1.json
+# Veröffentlicht als ghcr.io/frey0r/kinoite
+name: kinoite
+description: Fedora Kinoite mit vollen Codecs, CoolerControl und LACT
+
+# Offizielles Kinoite von Fedora, nicht Universal Blue: ublue entfernt Discovers
+# rpm-ostree-Backend und fedora-third-party.
+base-image: quay.io/fedora/fedora-kinoite
+# Fest auf eine Fedora-Version. Der Wechsel auf die nächste läuft bewusst über
+# einen Pull Request, der das Image vorher testweise baut.
+image-version: 45
+
+# Kein bluebuild- und kein cosign-Binary im Image. Die Signatur prüft rpm-ostree selbst.
+blue-build-tag: none
+cosign-version: none
+
+modules:
+  # Kernelmodule (ntsync, nct6775) und udev-Regeln nach /usr/lib.
+  - type: files
+    files:
+      - source: system
+        destination: /
+
+  - type: dnf
+    repos:
+      copr:
+        - codifryed/CoolerControl
+        - ilyaz/LACT
+      # Nur für den Build. cleanup entfernt die Repos danach wieder.
+      nonfree: rpmfusion
+      cleanup: true
+    remove:
+      packages:
+        - firefox
+        - firefox-langpacks
+    install:
+      # ffmpeg aus RPM Fusion ersetzt ffmpeg-free und die lib*-free-Pakete.
+      # Kein skip-broken: Passt mesa-va-drivers-freeworld nicht exakt zu Fedoras
+      # Mesa, soll der Build scheitern statt ohne Hardware-Decoding durchzulaufen.
+      allow-erasing: true
+      packages:
+        - cava
+        - fastfetch
+        - steam-devices
+        - coolercontrol
+        - lact
+        - ffmpeg
+        - mesa-va-drivers-freeworld
+
+  - type: systemd
+    system:
+      enabled:
+        - coolercontrold.service
+        - lactd.service
+
+  # Signaturregel und öffentlicher Schlüssel für ostree-image-signed.
+  - type: signing

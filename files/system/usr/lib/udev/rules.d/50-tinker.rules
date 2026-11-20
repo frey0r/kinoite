@@ -1,0 +1,5 @@
+# Ducky Tinker 75 ISO (ProjectD, QMK) – Zugriff für den angemeldeten Benutzer
+# Tastatur im Normalbetrieb (Raw HID für spätere LED-Rückmeldung)
+KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="3233", ATTRS{idProduct}=="0011", TAG+="uaccess"
+# WestBerry-Bootloader (wb32-dfu) zum Firmware-Aufspielen
+SUBSYSTEMS=="usb", ATTRS{idVendor}=="342d", ATTRS{idProduct}=="dfa0", TAG+="uaccess"
