@@ -31,6 +31,8 @@ Für den Umstieg gelten diese Voraussetzungen:
 - Der letzte Build in *Actions* ist grün, und das Paket `kinoite` unter *Packages* ist auf **Public** gestellt.
 - Der Rechner läuft auf derselben Fedora-Version wie `image-version`.
 - Das gebootete Deployment ist gepinnt (`sudo ostree admin pin 0`) und dient als Rückweg.
+- Die Zwei-Faktor-Anmeldung für das GitHub-Konto ist aktiv. Wer das Konto übernimmt, kann sonst ein signiertes Image mit beliebigem Inhalt veröffentlichen, und der Rechner installiert es.
+- Der wöchentliche Check ist eingerichtet, siehe „Wöchentlicher Check“.
 
 So wird umgestiegen:
 
@@ -69,11 +71,45 @@ Die folgende Tabelle zeigt die Downloadgrößen mit und ohne chunkah, ermittelt 
 > [!NOTE]
 > Wenn sich die Aufteilung ändert, lädt das nächste Update mehr. Beim Abschalten von chunkah oder bei einer anderen Layer-Zahl ist es das ganze Image. BlueBuild verwendet chunkah ohne feste Version, deshalb kann auch eine geänderte chunkah-Version ein einzelnes Update vergrößern.
 
-Dependabot schlägt Updates der GitHub Action als Pull Request vor. Diese Pull Requests mergen, denn GitHub schaltet geplante Builds nach 60 Tagen ohne Aktivität im Repo ab.
+Die BlueBuild-Action ist per Commit-SHA eingebunden und nicht per Tag. Tags lassen sich verschieben, und die Action hat Zugriff auf den Signaturschlüssel. Die BlueBuild-CLI (`v0.9`) und chunkah (`latest`) holt die Action weiter ohne feste Version.
+
+Dependabot schlägt höhere Versionen der Action jeden Samstag als Pull Request vor. Diese Pull Requests mergen, sobald der PR-Build grün ist. So folgt die Action den Releases von BlueBuild, und jeder Merge zählt als Aktivität: GitHub schaltet geplante Builds nach 60 Tagen ohne Aktivität im Repo ab.
+
+## Wöchentlicher Check
+
+Der Check `werkzeuge/kinoite-check.py` läuft jeden Sonntag um 11:30 Uhr Ortszeit. War der Rechner zu der Zeit aus, läuft er beim nächsten Start nach. Er meldet sich per KDE-Benachrichtigung, und zwar nur, wenn er etwas findet. Ein Klick auf die Benachrichtigung öffnet die passende Seite auf GitHub.
+
+Die folgende Tabelle zeigt, was der Check prüft:
+
+| Prüfung | Schwelle | Bedeutung |
+|---|---|---|
+| Alter des Images unter `:latest` | 3 Tage | Die täglichen Builds scheitern. |
+| Alter des letzten Commits auf `main` | 45 Tage | GitHub schaltet den Nacht-Build nach 60 Tagen ab. |
+| Offene Dependabot-Pull-Requests | 1 | Ein Update der Action wartet aufs Mergen. |
+| Alter des jüngsten Deployments auf dem Rechner | 14 Tage | Updates kommen nicht an. |
+
+Sind GitHub oder die Registry nach 3 Versuchen im Abstand von 1 Minute nicht erreichbar, meldet der Check das ebenfalls.
+
+So wird der Check eingerichtet:
+
+```sh
+systemctl --user link ~/Projekte/Kinoite/werkzeuge/kinoite-check.service ~/Projekte/Kinoite/werkzeuge/kinoite-check.timer
+systemctl --user enable --now kinoite-check.timer
+```
+
+Ergebnis: `systemctl --user list-timers` zeigt `kinoite-check.timer`.
+
+Von Hand prüfen, ohne Benachrichtigung:
+
+```sh
+~/Projekte/Kinoite/werkzeuge/kinoite-check.py --keine-meldung
+```
+
+Die Schwellen lassen sich mit `--max-image-tage`, `--max-commit-tage` und `--max-deployment-tage` ändern. Mit `--max-image-tage 0` erscheint zum Testen immer eine Benachrichtigung. Das Protokoll zeigt `journalctl --user -u kinoite-check`.
 
 ## Wenn ein Build scheitert
 
-Ein gescheiterter Build veröffentlicht nichts. Das zuletzt gebaute Image bleibt unter `:latest`, und der Rechner bleibt auf seinem Stand.
+Ein gescheiterter Build veröffentlicht nichts. Das zuletzt gebaute Image bleibt unter `:latest`, und der Rechner bleibt auf seinem Stand. Der wöchentliche Check meldet es, sobald das Image unter `:latest` älter als 3 Tage ist.
 
 Die häufigste Ursache ist `mesa-va-drivers-freeworld`. Das Paket muss exakt zur Mesa-Version von Fedora passen, und RPM Fusion zieht eine höhere Mesa-Version oft erst einige Tage später nach. Bis dahin scheitert der Build. Das Rezept setzt deshalb bewusst kein `skip-broken`, damit kein Image ohne Hardware-Decoding entsteht.
 
@@ -111,3 +147,4 @@ Dabei die Versionsnummer im Befehl an die laufende Fedora-Version anpassen.
 
 - 2026-11-20: Repo angelegt. Basis Fedora Kinoite 45, Inhalt wie im Abschnitt „Inhalt des Images“.
 - 2026-11-20: Rechunking mit chunkah eingeschaltet, Messwerte im Abschnitt „Updates“. Vorher auf dem Branch `chunkah-test` geprüft: gleicher Inhalt, Import mit `ostree container image pull` erfolgreich.
+- 2026-11-20: Wöchentlicher Check in `werkzeuge/`, BlueBuild-Action per Commit-SHA, Dependabot wöchentlich, Zwei-Faktor-Anmeldung als Voraussetzung für den Umstieg.

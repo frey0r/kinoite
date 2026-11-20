@@ -1,0 +1,9 @@
+[Unit]
+Description=Kinoite-Image: Check, ob Builds, Repo-Aktivität und System-Updates laufen
+# Meldet Funde als Benachrichtigung, braucht also die laufende Plasma-Sitzung
+After=graphical-session.target
+
+[Service]
+Type=oneshot
+Environment=LANG=C.UTF-8
+ExecStart=%h/Projekte/Kinoite/werkzeuge/kinoite-check.py

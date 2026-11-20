@@ -1,0 +1,11 @@
+[Unit]
+Description=Kinoite-Image: Check jeden Sonntag
+
+[Timer]
+OnCalendar=Sun 11:30
+# War der Rechner aus, läuft der Check beim nächsten Start nach
+Persistent=true
+RandomizedDelaySec=10min
+
+[Install]
+WantedBy=timers.target

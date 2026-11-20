@@ -3,4 +3,6 @@ updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "daily"
+      # Samstags, damit ein PR schon vor dem Sonntags-Check (werkzeuge/kinoite-check.py) da ist
+      interval: "weekly"
+      day: "saturday"
