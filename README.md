@@ -93,7 +93,7 @@ Sind GitHub oder die Registry nach 3 Versuchen im Abstand von 1 Minute nicht err
 So wird der Check eingerichtet:
 
 ```sh
-systemctl --user link ~/Projekte/Kinoite/werkzeuge/kinoite-check.service ~/Projekte/Kinoite/werkzeuge/kinoite-check.timer
+systemctl --user link ~/Projekte/Computer/Kinoite/werkzeuge/kinoite-check.service ~/Projekte/Computer/Kinoite/werkzeuge/kinoite-check.timer
 systemctl --user enable --now kinoite-check.timer
 ```
 
@@ -102,7 +102,7 @@ Ergebnis: `systemctl --user list-timers` zeigt `kinoite-check.timer`.
 Von Hand prüfen, ohne Benachrichtigung:
 
 ```sh
-~/Projekte/Kinoite/werkzeuge/kinoite-check.py --keine-meldung
+~/Projekte/Computer/Kinoite/werkzeuge/kinoite-check.py --keine-meldung
 ```
 
 Die Schwellen lassen sich mit `--max-image-tage`, `--max-commit-tage` und `--max-deployment-tage` ändern. Mit `--max-image-tage 0` erscheint zum Testen immer eine Benachrichtigung. Das Protokoll zeigt `journalctl --user -u kinoite-check`.

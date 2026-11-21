@@ -6,4 +6,4 @@ After=graphical-session.target
 [Service]
 Type=oneshot
 Environment=LANG=C.UTF-8
-ExecStart=%h/Projekte/Kinoite/werkzeuge/kinoite-check.py
+ExecStart=%h/Projekte/Computer/Kinoite/werkzeuge/kinoite-check.py
