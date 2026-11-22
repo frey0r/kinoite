@@ -2,7 +2,7 @@
 
 Stand: 2026-11-20
 
-Dieses Repo baut ein eigenes Fedora-Kinoite-Image mit BlueBuild auf GitHub Actions. Es ergänzt das offizielle Kinoite um Codecs und Hardware-Werkzeuge für einen AMD-Desktop. Das README richtet sich an mich selbst und beschreibt Inhalt, Umstieg, Updates und Rückweg.
+Dieses Repo baut ein eigenes Fedora-Kinoite-Image mit BlueBuild auf GitHub Actions. Es ergänzt das offizielle Kinoite um Codecs und Hardware-Werkzeuge für einen AMD-Desktop. Das README ist eine Notiz für den eigenen Gebrauch und beschreibt Inhalt, Umstieg, Updates und Rückweg.
 
 ## Inhalt des Images
 
@@ -32,7 +32,7 @@ Für den Umstieg gelten diese Voraussetzungen:
 - Der Rechner läuft auf derselben Fedora-Version wie `image-version`.
 - Das gebootete Deployment ist gepinnt (`sudo ostree admin pin 0`) und dient als Rückweg.
 - Die Zwei-Faktor-Anmeldung für das GitHub-Konto ist aktiv. Wer das Konto übernimmt, kann sonst ein signiertes Image mit beliebigem Inhalt veröffentlichen, und der Rechner installiert es.
-- Der wöchentliche Check ist eingerichtet, siehe „Wöchentlicher Check“.
+- Der wöchentliche Check ist eingerichtet, siehe [Wöchentlicher Check](#wöchentlicher-check).
 
 So wird umgestiegen:
 
@@ -41,16 +41,18 @@ So wird umgestiegen:
    rpm-ostree rebase ostree-unverified-registry:ghcr.io/frey0r/kinoite:latest --uninstall=cava --uninstall=coolercontrol --uninstall=fastfetch --uninstall=steam-devices
    ```
 2. Neu starten.
-3. Die lokalen Kopien in `/etc` löschen, die das Image ersetzt: `/etc/modules-load.d/ntsync.conf`, `/etc/modules-load.d/nct6775.conf`, die drei Regeln in `/etc/udev/rules.d`, `/etc/systemd/system/lactd.service` und die CoolerControl-Datei in `/etc/yum.repos.d`. Danach `sudo systemctl daemon-reload` und `sudo systemctl enable --now lactd`.
-4. Auf das signierte Image wechseln:
+3. Die lokalen Kopien in `/etc` löschen, die das Image ersetzt: `/etc/modules-load.d/ntsync.conf`, `/etc/modules-load.d/nct6775.conf`, die drei Regeln in `/etc/udev/rules.d`, `/etc/systemd/system/lactd.service` und die CoolerControl-Datei in `/etc/yum.repos.d`.
+4. `sudo systemctl daemon-reload` ausführen.
+5. `sudo systemctl enable --now lactd` ausführen.
+6. Auf das signierte Image wechseln:
    ```sh
    rpm-ostree rebase ostree-image-signed:docker://ghcr.io/frey0r/kinoite:latest
    ```
-5. Neu starten.
+7. Neu starten.
 
 Ergebnis: `rpm-ostree status` zeigt als Origin `ostree-image-signed:docker://ghcr.io/frey0r/kinoite:latest` und keine `LayeredPackages`.
 
-Der erste Schritt läuft ohne Signaturprüfung, weil die Signaturregel und der öffentliche Schlüssel erst mit dem Image auf den Rechner kommen. Erst der zweite Wechsel prüft die Signatur.
+Der Wechsel auf das unsignierte Image läuft ohne Signaturprüfung, weil die Signaturregel und der öffentliche Schlüssel erst mit dem Image auf den Rechner kommen. Erst der Wechsel auf das signierte Image prüft die Signatur.
 
 ## Updates
 
@@ -99,7 +101,7 @@ systemctl --user enable --now kinoite-check.timer
 
 Ergebnis: `systemctl --user list-timers` zeigt `kinoite-check.timer`.
 
-Von Hand prüfen, ohne Benachrichtigung:
+Von Hand läuft der Check ohne Benachrichtigung mit diesem Befehl:
 
 ```sh
 ~/Projekte/Computer/Kinoite/werkzeuge/kinoite-check.py --keine-meldung
@@ -113,7 +115,10 @@ Ein gescheiterter Build veröffentlicht nichts. Das zuletzt gebaute Image bleibt
 
 Die häufigste Ursache ist `mesa-va-drivers-freeworld`. Das Paket muss exakt zur Mesa-Version von Fedora passen, und RPM Fusion zieht eine höhere Mesa-Version oft erst einige Tage später nach. Bis dahin scheitert der Build. Das Rezept setzt deshalb bewusst kein `skip-broken`, damit kein Image ohne Hardware-Decoding entsteht.
 
-Wenn der Build mehrere Tage scheitert: das Log unter *Actions* lesen und die Paketversionen in RPM Fusion und Fedora vergleichen.
+Wenn der Build mehrere Tage scheitert, diese Schritte ausführen:
+
+1. Das Log unter *Actions* lesen.
+2. Die Paketversionen in RPM Fusion und Fedora vergleichen.
 
 ## Auf die nächste Fedora-Version wechseln
 
@@ -122,7 +127,8 @@ So wird auf die nächste Fedora-Version gewechselt:
 1. Einen Branch anlegen und `image-version` im Rezept erhöhen.
 2. Einen Pull Request öffnen. Die Action baut das Image testweise, ohne es zu veröffentlichen.
 3. Wenn der Testbuild grün ist: den Pull Request mergen.
-4. Den Rechner mit `rpm-ostree upgrade` aktualisieren und neu starten.
+4. Den Rechner mit `rpm-ostree upgrade` aktualisieren.
+5. Neu starten.
 
 Der Rechner folgt dem Tag `:latest`. Discover bietet deshalb keinen eigenen Wechsel der Fedora-Version an, der Wechsel geschieht nur über das Rezept.
 
@@ -131,11 +137,11 @@ Der Rechner folgt dem Tag `:latest`. Discover bietet deshalb keinen eigenen Wech
 Der private Schlüssel liegt als Secret `SIGNING_SECRET` im Repo und als Datei im lokalen Tresor `~/Vaults/Wichtiges`. Er hat keine Passphrase, so verlangt es BlueBuild. Im Repo liegt nur `cosign.pub`.
 
 > [!CAUTION]
-> Den privaten Schlüssel nie committen. Wenn er neu erzeugt werden muss, prüft der Rechner das nächste Image gegen den alten Schlüssel und lehnt es ab. Dann führt nur der Weg über `ostree-unverified-registry` zurück, wie beim Umstieg.
+> Den privaten Schlüssel nie committen. Wenn er neu erzeugt werden muss, prüft der Rechner das nächste Image gegen den alten Schlüssel und lehnt es ab. Dann führt nur der Weg über `ostree-unverified-registry` zurück, wie beim [Umstieg](#auf-das-image-umsteigen).
 
 ## Rückweg
 
-Im Bootmenü das gepinnte Deployment wählen. Dauerhaft zurück auf das offizielle Kinoite geht es mit:
+Im Bootmenü das gepinnte Deployment wählen. Dauerhaft zurück auf das offizielle Kinoite geht es mit diesem Befehl:
 
 ```sh
 rpm-ostree rebase fedora:fedora/45/x86_64/kinoite
@@ -148,3 +154,4 @@ Dabei die Versionsnummer im Befehl an die laufende Fedora-Version anpassen.
 - 2026-11-20: Repo angelegt. Basis Fedora Kinoite 45, Inhalt wie im Abschnitt „Inhalt des Images“.
 - 2026-11-20: Rechunking mit chunkah eingeschaltet, Messwerte im Abschnitt „Updates“. Vorher auf dem Branch `chunkah-test` geprüft: gleicher Inhalt, Import mit `ostree container image pull` erfolgreich.
 - 2026-11-20: Wöchentlicher Check in `werkzeuge/`, BlueBuild-Action per Commit-SHA, Dependabot wöchentlich, Zwei-Faktor-Anmeldung als Voraussetzung für den Umstieg.
+- 2026-11-22: nach dem Doku-Stil überarbeitet, Inhalt unverändert. Schritte mit zwei Handlungen sind in einzelne Schritte geteilt.
