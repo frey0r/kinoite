@@ -51,6 +51,9 @@ modules:
         # Streaming-Server für Moonlight. Das RPM setzt cap_sys_admin und cap_sys_nice
         # auf /usr/bin/sunshine selbst. Die User-Unit bleibt aus, aktiviert wird lokal.
         - Sunshine
+        # Browser mit Fenster für WebUSB/WebHID (Firmware-Seiten, VIA), seit Brave am 2026-11-24 weg ist.
+        # Derselbe Fedora-Build wie chromium-headless, chromium-common teilen sich beide.
+        - chromium
         - ffmpeg
         - mesa-va-drivers-freeworld
 

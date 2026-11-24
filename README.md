@@ -16,6 +16,7 @@ Die folgende Tabelle zeigt, was das Rezept `recipes/recipe.yml` gegenüber dem o
 | Lüftersteuerung | `coolercontrol`, Dienst `coolercontrold` | COPR `codifryed/CoolerControl` |
 | GPU-Undervolt und Powerlimit | `lact`, Dienst `lactd` | COPR `ilyaz/LACT` |
 | Streaming zu Moonlight | `Sunshine`, User-Unit `app-dev.lizardbyte.app.Sunshine` ist aus | COPR `lizardbyte/beta` |
+| Browser für WebUSB und WebHID (Firmware-Seiten, VIA) | `chromium` | Fedora |
 | Kleine Programme | `cava`, `fastfetch`, `steam-devices` | Fedora |
 | Editor | `code` (VS Code) | Repo von Microsoft |
 | Werkzeuge für Claude Code | siehe [Werkzeuge für Claude Code](#werkzeuge-für-claude-code) | Fedora |
@@ -198,3 +199,4 @@ Der Befehl `rpm-ostree rebase fedora:fedora/45/x86_64/kinoite` funktioniert aus 
 - 2026-11-23: nach den erweiterten Prüfregeln des Doku-Stils überarbeitet, Inhalt unverändert.
 - 2026-11-24: Sunshine aus dem COPR `lizardbyte/beta`, VS Code aus dem Repo von Microsoft und 22 Werkzeuge für Claude Code aufgenommen. Beim Umstieg kommt die Sunshine-Schicht weg. Echtes chunkah-Update gemessen, Werte im Abschnitt „Updates“.
 - 2026-11-24: Umstieg erledigt, der Rechner läuft auf dem signierten Image. Rückweg korrigiert: Dem Image fehlt die OSTree-Remote `fedora`, der Weg zurück führt über das Container-Image von Fedora. MuPDF bringt nur einen sichtbaren Menüeintrag mit.
+- 2026-11-24: Chromium aufgenommen, als Browser mit Fenster für WebUSB und WebHID. Brave ist deinstalliert.
