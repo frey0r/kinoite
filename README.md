@@ -1,8 +1,8 @@
 # Kinoite-Image
 
-Stand: 2026-11-20
+Stand: 2026-11-24
 
-Dieses Repo baut ein eigenes Fedora-Kinoite-Image mit BlueBuild auf GitHub Actions. Es ergänzt das offizielle Kinoite um Codecs und Hardware-Werkzeuge für einen AMD-Desktop. Das README ist eine Notiz für den eigenen Gebrauch und beschreibt Inhalt, Umstieg, Updates und Rückweg.
+Dieses Repo baut ein eigenes Fedora-Kinoite-Image mit BlueBuild auf GitHub Actions. Es ergänzt das offizielle Kinoite um Codecs, Hardware-Werkzeuge für einen AMD-Desktop, Sunshine, VS Code und Kommandozeilen-Werkzeuge für Claude Code. Das README ist eine Notiz für den eigenen Gebrauch und beschreibt Inhalt, Umstieg, Updates und Rückweg.
 
 ## Inhalt des Images
 
@@ -15,14 +15,49 @@ Die folgende Tabelle zeigt, was das Rezept `recipes/recipe.yml` gegenüber dem o
 | Volle Codecs | `ffmpeg` statt `ffmpeg-free`, `mesa-va-drivers-freeworld` (HEVC und H.264 per VA-API) | RPM Fusion free |
 | Lüftersteuerung | `coolercontrol`, Dienst `coolercontrold` | COPR `codifryed/CoolerControl` |
 | GPU-Undervolt und Powerlimit | `lact`, Dienst `lactd` | COPR `ilyaz/LACT` |
-| Werkzeuge | `cava`, `fastfetch`, `steam-devices` | Fedora |
+| Streaming zu Moonlight | `Sunshine`, User-Unit `app-dev.lizardbyte.app.Sunshine` ist aus | COPR `lizardbyte/beta` |
+| Kleine Programme | `cava`, `fastfetch`, `steam-devices` | Fedora |
+| Editor | `code` (VS Code) | Repo von Microsoft |
+| Werkzeuge für Claude Code | siehe [Werkzeuge für Claude Code](#werkzeuge-für-claude-code) | Fedora |
 | Kernelmodule beim Start | `ntsync`, `nct6775` in `/usr/lib/modules-load.d` | dieses Repo |
 | udev-Regeln | Tinker 75 (QMK), 8BitDo, `energy_uj` lesbar für MangoHud, in `/usr/lib/udev/rules.d` | dieses Repo |
 | Entfernt | `firefox`, `firefox-langpacks` | – |
 
-RPM Fusion und die COPRs sind nur während des Builds aktiv. Das Modul `dnf` entfernt sie am Ende wieder (`cleanup: true`).
+RPM Fusion, die COPRs und das Repo von Microsoft sind nur während des Builds aktiv. Das Modul `dnf` entfernt sie am Ende wieder (`cleanup: true`). Das Repo von Microsoft steht in der Datei `files/dnf/vscode.repo` mit Signaturprüfung, weil Microsofts eigene Datei `config.repo` die Prüfung abschaltet.
 
-Lokal auf dem Rechner bleiben die Kernelparameter, alle Flatpaks, die Konfigurationen in den Ordnern `/etc/lact` und `/etc/coolercontrol`, die Datei `/etc/hosts` und alles im Home-Verzeichnis.
+Sunshine bringt seine Capabilities, udev-Regeln und das Modul `uhid` selbst mit. Die User-Unit wird im Image nicht aktiviert. Ob Sunshine läuft, entscheidet die lokale Einstellung mit dem Befehl `systemctl --user enable`.
+
+Lokal auf dem Rechner bleiben die Kernelparameter, alle Flatpaks, die Konfigurationen in den Ordnern `/etc/lact` und `/etc/coolercontrol`, die Datei `/etc/hosts` und alles im Home-Verzeichnis, darunter die Sunshine-Konfiguration.
+
+### Werkzeuge für Claude Code
+
+Claude Code läuft in VS Code direkt auf dem Host, nicht in einer Flatpak-Sandbox. Ins Image kommen die Kommandozeilen-Werkzeuge, die Claude Code bei vielen Aufgaben braucht und die Fedora stabil paketiert. Die Auswahl stützt sich auf eine Auswertung von 334 Claude-Code-Sitzungen vom 2026-10-26 bis 2026-11-24.
+
+Die folgende Tabelle zeigt die Werkzeuge nach Zweck:
+
+| Zweck | Pakete |
+|---|---|
+| Programmieren und Prüfen | `nodejs`, `uv`, `ShellCheck`, `lua`, `sqlite`, `dnf5` |
+| Webseiten ohne Browserfenster | `chromium-headless`, Programm `/usr/lib64/chromium-browser/headless_shell` |
+| PDF | `mupdf` (Programm `mutool`), `qpdf` |
+| Bilder und Icons | `librsvg2-tools`, `potrace`, `vips-tools`, `oxipng` |
+| Medien | `mkvtoolnix`, `mediainfo` |
+| Fenster unter XWayland | `xwininfo`, `wmctrl` |
+| Suchen und Abfragen | `ripgrep`, `fd-find`, `yq` |
+| Netzwerk | `nmap` |
+
+Für jedes Werkzeug gilt diese Abgrenzung:
+
+- **Image:** stabile Fedora-Pakete, die bei vielen Aufgaben helfen.
+- **Toolbox:** Bauumgebungen einzelner Projekte, zum Beispiel für CAD oder QMK.
+- **Home-Verzeichnis:** Werkzeuge, die öfter Updates brauchen, als Fedoras Paket sie liefert, liegen im Ordner `~/.local/bin`. Beispiele sind yt-dlp, gh, streamlink, restic und Syncthing.
+- **Python-Bibliotheken:** keine Pakete `python3-*` im Image. Skripte holen sie pro Lauf mit dem Befehl `uv run --with BIBLIOTHEK`.
+
+Dabei ersetzen:
+
+- `BIBLIOTHEK`: Name des Python-Pakets, zum Beispiel `numpy` oder `pypdf`.
+
+Das Paket `mupdf` bringt zwei Menüeinträge mit. Lokale Kopien mit dem Eintrag `NoDisplay=true` im Ordner `~/.local/share/applications` verstecken sie. PDFs öffnet weiter das Programm, das die Datei `~/.config/mimeapps.list` festlegt.
 
 ## Auf das Image umsteigen
 
@@ -38,10 +73,10 @@ So wird umgestiegen:
 
 1. Auf das unsignierte Image wechseln und die gelayerten Pakete dabei entfernen:
    ```sh
-   rpm-ostree rebase ostree-unverified-registry:ghcr.io/frey0r/kinoite:latest --uninstall=cava --uninstall=coolercontrol --uninstall=fastfetch --uninstall=steam-devices
+   rpm-ostree rebase ostree-unverified-registry:ghcr.io/frey0r/kinoite:latest --uninstall=cava --uninstall=coolercontrol --uninstall=fastfetch --uninstall=steam-devices --uninstall=Sunshine
    ```
 2. Neu starten.
-3. Die lokalen Kopien im Ordner `/etc` löschen, die das Image ersetzt: die Dateien `/etc/modules-load.d/ntsync.conf` und `/etc/modules-load.d/nct6775.conf`, die drei Regeln im Ordner `/etc/udev/rules.d`, die Datei `/etc/systemd/system/lactd.service` und die CoolerControl-Datei im Ordner `/etc/yum.repos.d`.
+3. Die lokalen Kopien im Ordner `/etc` löschen, die das Image ersetzt: die Dateien `/etc/modules-load.d/ntsync.conf` und `/etc/modules-load.d/nct6775.conf`, die drei Regeln im Ordner `/etc/udev/rules.d`, die Datei `/etc/systemd/system/lactd.service` sowie die Repo-Dateien von CoolerControl und Sunshine im Ordner `/etc/yum.repos.d`.
 4. Den Befehl `sudo systemctl daemon-reload` ausführen.
 5. Den Befehl `sudo systemctl enable --now lactd` ausführen.
 6. Auf das signierte Image wechseln:
@@ -69,6 +104,8 @@ Die folgende Tabelle zeigt die Downloadgrößen mit und ohne chunkah, ermittelt 
 | Neubau ohne Paketänderung, gemessen | 264 MB | 92 MB |
 | F45-Updates vom 2026-11-13 bis 2026-11-20, hochgerechnet | 2,1 GB | 1,3 GB |
 | Ganzes Image beim Umstieg | 3,58 GB | 3,26 GB |
+
+Am 2026-11-24 ist das echte Update gemessen worden, vor der Aufnahme der Werkzeuge. Von Image `20261120` auf Image `20261123` lud der Rechner 17 von 128 Layern, zusammen 655 MB. Ein einzelner Tag kostete 522–593 MB. Davon entfallen bei jedem Update 246 MB auf die Datei `initramfs.img`, denn Fedora erzeugt sie bei jedem täglichen Compose von vorn. Ohne chunkah wären es ca. 1.850 MB gewesen: 1.591 MB für die geänderten Layer der Fedora-Basis vom 2026-11-20 bis 2026-11-24 und ca. 264 MB eigene Layer.
 
 > [!NOTE]
 > Wenn sich die Aufteilung ändert, lädt das nächste Update mehr. Beim Abschalten von chunkah oder bei einer anderen Layer-Zahl ist es das ganze Image. BlueBuild verwendet chunkah ohne feste Version, deshalb kann auch eine geänderte chunkah-Version ein einzelnes Update vergrößern.
@@ -157,3 +194,4 @@ Dabei die Versionsnummer im Befehl an die laufende Fedora-Version anpassen.
 - 2026-11-20: Wöchentlicher Check im Ordner `werkzeuge/`, BlueBuild-Action per Commit-SHA, Dependabot wöchentlich, Zwei-Faktor-Anmeldung als Voraussetzung für den Umstieg.
 - 2026-11-22: nach dem Doku-Stil überarbeitet, Inhalt unverändert. Schritte mit zwei Handlungen sind in einzelne Schritte geteilt.
 - 2026-11-23: nach den erweiterten Prüfregeln des Doku-Stils überarbeitet, Inhalt unverändert.
+- 2026-11-24: Sunshine aus dem COPR `lizardbyte/beta`, VS Code aus dem Repo von Microsoft und 22 Werkzeuge für Claude Code aufgenommen. Beim Umstieg kommt die Sunshine-Schicht weg. Echtes chunkah-Update gemessen, Werte im Abschnitt „Updates“.

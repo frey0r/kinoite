@@ -27,6 +27,9 @@ modules:
       copr:
         - codifryed/CoolerControl
         - ilyaz/LACT
+        # Beta statt Stable: Zwischen Stable-Releases liegen Monate, und Stable baut
+        # für eine neue Fedora-Version erst mit dem nächsten Release.
+        - lizardbyte/beta
       # Nur für den Build. cleanup entfernt die Repos danach wieder.
       nonfree: rpmfusion
       cleanup: true
@@ -45,8 +48,47 @@ modules:
         - steam-devices
         - coolercontrol
         - lact
+        # Streaming-Server für Moonlight. Das RPM setzt cap_sys_admin und cap_sys_nice
+        # auf /usr/bin/sunshine selbst. Die User-Unit bleibt aus, aktiviert wird lokal.
+        - Sunshine
         - ffmpeg
         - mesa-va-drivers-freeworld
+
+  # Werkzeuge für Claude Code, das in VS Code direkt auf dem Host läuft. Ins Image
+  # kommen nur stabile Fedora-Pakete. Schnelllebige Tools (yt-dlp, gh, streamlink)
+  # bleiben in ~/.local/bin, Python-Bibliotheken holt uv pro Lauf.
+  - type: dnf
+    repos:
+      files:
+        - vscode.repo # aus files/dnf/
+      keys:
+        - https://packages.microsoft.com/keys/microsoft.asc
+      cleanup: true
+    install:
+      packages:
+        - code # VS Code
+        - nodejs # JavaScript prüfen und ausführen
+        - uv # Python-Bibliotheken pro Lauf: uv run --with
+        - chromium-headless # headless_shell: Screenshot, DOM und PDF von HTML-Seiten
+        - mupdf # mutool: PDFs rendern und Text auslesen
+        - qpdf # PDFs zerlegen, reparieren und prüfen
+        - sqlite # sqlite3 für die Datenbanken von Apps
+        - ShellCheck # Shell-Skripte prüfen
+        - xwininfo # Fenster unter XWayland untersuchen
+        - wmctrl # Fenster unter XWayland steuern
+        - librsvg2-tools # rsvg-convert: SVG nach PNG
+        - potrace # Bitmaps vektorisieren
+        - vips-tools # Bilder skalieren und umwandeln
+        - oxipng # PNGs verlustfrei verkleinern
+        - dnf5 # Paketabfragen auf dem Host
+        - lua # Lua-Mods prüfen
+        - unar # Archive entpacken, auch RAR
+        - mkvtoolnix # Matroska-Dateien bearbeiten
+        - mediainfo # Technische Daten von Mediendateien
+        - nmap # Geräte im Netz finden
+        - ripgrep # rg
+        - fd-find # fd
+        - yq # YAML, TOML und XML abfragen
 
   - type: systemd
     system:

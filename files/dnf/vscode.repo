@@ -1,0 +1,8 @@
+# Repo von Microsoft für VS Code (Paket code). Eigene Datei statt Microsofts
+# config.repo, weil diese gpgcheck=0 setzt.
+[code]
+name=Visual Studio Code
+baseurl=https://packages.microsoft.com/yumrepos/vscode
+enabled=1
+gpgcheck=1
+gpgkey=https://packages.microsoft.com/keys/microsoft.asc
