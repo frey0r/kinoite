@@ -57,7 +57,7 @@ Dabei ersetzen:
 
 - `BIBLIOTHEK`: Name des Python-Pakets, zum Beispiel `numpy` oder `pypdf`.
 
-Das Paket `mupdf` bringt zwei Menüeinträge mit. Lokale Kopien mit dem Eintrag `NoDisplay=true` im Ordner `~/.local/share/applications` verstecken sie. PDFs öffnet weiter das Programm, das die Datei `~/.config/mimeapps.list` festlegt.
+Das Paket `mupdf` bringt den sichtbaren Menüeintrag MuPDF-GL mit, die Datei `mupdf.desktop` ist schon versteckt. Eine lokale Kopie der Datei `mupdf-gl.desktop` mit dem Eintrag `NoDisplay=true` im Ordner `~/.local/share/applications` versteckt MuPDF-GL. PDFs öffnet weiter das Programm, das die Datei `~/.config/mimeapps.list` festlegt.
 
 ## Auf das Image umsteigen
 
@@ -179,13 +179,15 @@ Der private Schlüssel liegt als Secret `SIGNING_SECRET` im Repo und als Datei i
 
 ## Rückweg
 
-Im Bootmenü das gepinnte Deployment wählen. Dauerhaft zurück auf das offizielle Kinoite geht es mit diesem Befehl:
+Im Bootmenü das gepinnte Deployment wählen. Dauerhaft zurück auf das offizielle Kinoite geht es mit diesem Befehl, der auf das Container-Image von Fedora wechselt:
 
 ```sh
-rpm-ostree rebase fedora:fedora/45/x86_64/kinoite
+rpm-ostree rebase ostree-unverified-registry:quay.io/fedora/fedora-kinoite:45
 ```
 
 Dabei die Versionsnummer im Befehl an die laufende Fedora-Version anpassen.
+
+Der Befehl `rpm-ostree rebase fedora:fedora/45/x86_64/kinoite` funktioniert aus dem eigenen Image heraus nicht. Dem Image fehlt die OSTree-Remote `fedora`, der Ordner `/etc/ostree/remotes.d` ist leer. Nur das gepinnte Deployment hat die Remote noch in seinem eigenen Ordner `/etc`.
 
 ## Änderungen
 
@@ -195,3 +197,4 @@ Dabei die Versionsnummer im Befehl an die laufende Fedora-Version anpassen.
 - 2026-11-22: nach dem Doku-Stil überarbeitet, Inhalt unverändert. Schritte mit zwei Handlungen sind in einzelne Schritte geteilt.
 - 2026-11-23: nach den erweiterten Prüfregeln des Doku-Stils überarbeitet, Inhalt unverändert.
 - 2026-11-24: Sunshine aus dem COPR `lizardbyte/beta`, VS Code aus dem Repo von Microsoft und 22 Werkzeuge für Claude Code aufgenommen. Beim Umstieg kommt die Sunshine-Schicht weg. Echtes chunkah-Update gemessen, Werte im Abschnitt „Updates“.
+- 2026-11-24: Umstieg erledigt, der Rechner läuft auf dem signierten Image. Rückweg korrigiert: Dem Image fehlt die OSTree-Remote `fedora`, der Weg zurück führt über das Container-Image von Fedora. MuPDF bringt nur einen sichtbaren Menüeintrag mit.
